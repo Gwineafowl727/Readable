@@ -43,7 +43,7 @@ def get_modded_stats(original_ar, EZ, HR, DT, HT):
         return ms_to_ar(modded_ms), modded_ms
 
     elif EZ == 1 and HR == 0 and DT == 0 and HT == 1: # EZHT
-        modded_ar = original_ar / 2
+        modded_ar = original_ar * 0.5
         modded_ms = ar_to_ms(modded_ar) * (4 / 3)
         return ms_to_ar(modded_ms), modded_ms
 
@@ -199,10 +199,9 @@ def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
         ar, ms = get_modded_stats(ar, EZ, HR, DT, HT)
     else:
         ms = ar_to_ms(ar)  # Gets the "ms" value, in case there are no mods enabled
-
     if adjust == 0:  # Make a new function during app development
-        data = (get_raw_density(map, path_to_map, ms))
-        print(data)
+        density_data = (get_raw_density(map, path_to_map, ms))
+        print(density_data)
     
     #else:
     #    data = (get_adjusted_density(map, path_to_map, ms))
