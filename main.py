@@ -1,8 +1,6 @@
 import linecache
 import sys
 import numpy as np
-from functools import cache
-@cache
 
 def get_original_ar(map):
     for line in map:
@@ -135,7 +133,7 @@ def get_raw_density(map, path_to_map, ms):
 
 # working on adjusted density!
 
-def get_adjusted_hitobject(hitobject_line, coordinates, angle, length):  # Returns hit object timestamps, distance, direction
+'''def get_adjusted_hitobject(hitobject_line, coordinates, angle, length):  # Returns hit object timestamps, distance, direction
     s = hitobject_line.split(',')  # splits up line by comma
     hitobject_type = int(s[3])
 
@@ -174,7 +172,8 @@ def get_adjusted_density(map, path_to_map, ms):
             # coordinates, angle, and length will be used for NEXT iteration
 
             timestamp_array = np.append(timestamp_array, timestamp)
-            density_values = np.append(density_values, density)
+            density_values = np.append(density_values, density)'''
+
 
 
 def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
