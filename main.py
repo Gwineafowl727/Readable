@@ -130,7 +130,7 @@ def get_raw_density(map, path_to_map, ms):
 
 # working on adjusted density!
 
-'''def get_adjusted_hitobject(full_line, coordinate_array, d):  # Returns hit object timestamps, distance, direction, and specific type (length+end point too).
+def get_adjusted_hitobject(full_line, coordinate_array, d):  # Returns hit object timestamps, distance, direction, and specific type (length+end point too).
     s = full_line.split(',')  # circle_jump, circle_stream_1, slider_jump, slider_stream_1
     hitobject_type = int(s[3])
 
@@ -188,7 +188,7 @@ def get_adjusted_density(map, path_to_map, ms):
             coordinate_array = np.append(coordinate_array, coordinate)
             distance_array = np.append(distance_array, distance)
             angle_array = np.append(angle_array, angle)
-            length_array = np.append(length_array, length)'''
+            length_array = np.append(length_array, length)
 
 def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
     map = open(path_to_map, 'r', encoding='utf-8')
