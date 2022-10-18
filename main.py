@@ -128,69 +128,7 @@ def get_raw_density(map, path_to_map, ms):
 
     return np.reshape(np.append(raw_timestamp_array, raw_density_array, axis=0), newshape=(2, circle_amount))  # Combines time and density arrays into 2d array.
 
-# working on adjusted density!
-
-'''def get_adjusted_hitobject(full_line, coordinate_array, d):  # Returns hit object timestamps, distance, direction, and specific type (length+end point too).
-    s = full_line.split(',')  # circle_jump, circle_stream_1, slider_jump, slider_stream_1
-    hitobject_type = int(s[3])
-
-    if int(s[3]) == 12:
-        return 'spinner'  # a hit object that is a spinner will not contribute to density.
-
-    timestamp = s[2]
-
-    elif bin(hitobject_type).endswith(1):  # If hit object in question is a circle.
-
-        length = 0
-
-        coordinate = np.array([s[0], s[1]])
-
-        if not np.any(coordinate_array):
-            distance = 0
-        else:
-            distance = np.linalg.norm(coordinate, coordinate_array[d - 1])
-
-        
-
-
-   # else:  # If hit object in question is a slider.
-
-    # return timestamp, specific_type, coordinate, distance, angle, length
-
-def get_adjusted_density(map, path_to_map, ms):
-    c = 0  # The variable "c" acts like a line counter.
-    d = 0
-    timestamp_array = np.empty(0, dtype=float)
-
-    specific_type_array = np.empty(0, dtype=int)
-    coordinate_array = np.empty(0, dtype=int)
-    distance_array = np.empty(0, dtype=float)
-    angle_array = np.empty(0, dtype=float)
-    length_array = np.empty(0, dtype=float)
-
-    adjusted_density_array = np.empty(0, dtype=float)
-
-    for line in map:
-        c = c + 1
-        if line.startswith('[HitObjects]'):
-            #  print(line.replace('[HitObjects]', 'e'))
-            break
-
-    for line in map:
-        c = c + 1  # Start counting line again after [HitObjects]
-        d = d + 1  # For purpose of indexing coordinate_array to get distances
-        full_line = (linecache.getline(path_to_map, c))
-        if get_adjusted_hitobject(full_line, coordinate_array, d) != 'spinner':  # skips every spinner
-            timestamp, specific_type, coordinate, distance, angle, length = get_adjusted_hitobject(full_line)
-
-            timestamp_array = np.append(timestamp_array, timestamp)
-            specific_type_array = np.append(specific_type_array, specific_type)
-            coordinate_array = np.append(coordinate_array, coordinate)
-            distance_array = np.append(distance_array, distance)
-            angle_array = np.append(angle_array, angle)
-            length_array = np.append(length_array, length)'''
-
-def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
+def start_new_map(path_to_map, EZ, HR, DT, HT):
     map = open(path_to_map, 'r', encoding='utf-8')
     ar = float(get_original_ar(map))
     map.seek(0)  # Resets line variable for next instance of 'for line in map'
@@ -199,13 +137,13 @@ def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
         ar, ms = get_modded_stats(ar, EZ, HR, DT, HT)
     else:
         ms = ar_to_ms(ar)  # Gets the "ms" value, in case there are no mods enabled
-    if adjust == 0:  # Make a new function during app development
-        density_data = (get_raw_density(map, path_to_map, ms))
-        print(density_data)
+
+    density_data = (get_raw_density(map, path_to_map, ms))
+    print(density_data)
     
     #else:
     #    data = (get_adjusted_density(map, path_to_map, ms))
 
 np.set_printoptions(threshold=sys.maxsize)
 
-start_new_map('cycle hit.osu', 0, 0, 0, 0, 0)
+start_new_map('cycle hit.osu', 0, 0, 0, 0)
