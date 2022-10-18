@@ -208,4 +208,4 @@ def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
 
 np.set_printoptions(threshold=sys.maxsize)
 
-start_new_map('cycle hit.osu', 0, 0, 0, 0, 0)
+start_new_map('cycle hit.osu', 1, 0, 0, 0, 0)
