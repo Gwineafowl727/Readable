@@ -15,7 +15,7 @@ def ar_to_ms(ar):  # Equations sourced from osu! wiki
     else:
         return 1200 - 750 * (ar - 5) / 5
 
-def ms_to_ar(ms):
+def ms_to_ar(ms):  # Inverse of the function above, essentially
     if ms == 1200:
         return 5
     elif ms > 1200:
@@ -130,10 +130,10 @@ def get_raw_density(map, path_to_map, ms):
 
 # working on adjusted density!
 
-def get_angle(coordinate_array):  # I don't understand the math behind this, it is copy and pasted from some website. Basically, it gets the angle in which you have to change direction to aim at the object being calculated.
-	a = np.array(coordinate_array[d])
-	b = np.array(coordinate_array[d - 1])
-	c = np.array(coordinate_array[d - 2])
+def get_angle(coordinate, coordinate_array, d):  # I don't understand the math behind this, it is copy and pasted from some website. Basically, it gets the angle in which you have to change direction to aim at the object being calculated.
+	a = coordinate
+	b = np.array(coordinate_array[d])
+	c = np.array(coordinate_array[d])
 
 	ba = a - b
 	bc = c - b
@@ -154,27 +154,27 @@ def get_adjusted_hitobject(full_line, timestamp_array, coordinate_array, angle_a
 
     elif bin(hitobject_type).endswith(1):  # If hit object in question is a circle.
 
-        length = 0
-
         coordinate = np.array([s[0], s[1]])
 
-        if coordinate not np.any(coordinate_array):
+        if not np.any(coordinate_array):
             distance = 0
         else:
-            distance = np.linalg.norm(coordinate, coordinate_array[d - 1])
+            distance = np.linalg.norm(coordinate, coordinate_array[d])
             
-        
+		angle = get_angle(coordinate, coordinate_array, d)
 
-        
+		length = 0
 
+    else:  # If hit object in question is a slider.
+		
+		
 
-   # else:  # If hit object in question is a slider.
-
-    # return timestamp, coordinate, distance, angle, length
+    # return timestamp, coordinate, distance, angle, length, density
 
 def get_adjusted_density(map, path_to_map, ms):
-    c = 0  # The variable "c" acts like a line counter.
-    d = 0
+    c = 0  # For acting like a line counter.
+    d = 0  # For indexing purposes.
+
     timestamp_array = np.empty(0, dtype=float)
 
     coordinate_array = np.empty(0, dtype=int)
@@ -195,12 +195,17 @@ def get_adjusted_density(map, path_to_map, ms):
         d = d + 1  # For indexing purposes, since line is not an integer
         full_line = (linecache.getline(path_to_map, c))
         if get_adjusted_hitobject(full_line, coordinate_array, d) != 'spinner':  # skips every spinner
-            timestamp, coordinate, distance, angle = get_adjusted_hitobject(full_line)
+            timestamp, coordinate, distance, angle, density = get_adjusted_hitobject(full_line)
 
             timestamp_array = np.append(timestamp_array, timestamp)
             coordinate_array = np.append(coordinate_array, coordinate)
             distance_array = np.append(distance_array, distance)
             angle_array = np.append(angle_array, angle)
+			length_array = np.append(length_array, length)
+
+			adjusted_density_array = np.append(adjusted_density_array, density)
+
+	return np.reshape(np.append(raw_timestamp_array, raw_density_array, axis=0), newshape=(2, circle_amount))  # Combines time and density arrays into 2d array.
 
 def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
     map = open(path_to_map, 'r', encoding='utf-8')
