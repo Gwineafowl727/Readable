@@ -130,6 +130,19 @@ def get_raw_density(map, path_to_map, ms):
 
 # working on adjusted density!
 
+def get_angle(coordinate_array):  # I don't understand the math behind this, it is copy and pasted from some website. Basically, it gets the angle in which you have to change direction to aim at the object being calculated.
+	a = np.array(coordinate_array[d])
+	b = np.array(coordinate_array[d - 1])
+	c = np.array(coordinate_array[d - 2])
+
+	ba = a - b
+	bc = c - b
+
+	cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+	angle = np.arccos(cosine_angle)
+
+	return np.degrees(angle)
+
 def get_adjusted_hitobject(full_line, timestamp_array, coordinate_array, angle_array, d):  # Returns hit object timestamps, distance, direction, and specific type (length+end point too).
     s = full_line.split(',')
     hitobject_type = int(s[3])
