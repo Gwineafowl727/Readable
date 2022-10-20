@@ -130,8 +130,8 @@ def get_raw_density(map, path_to_map, ms):
 
 # working on adjusted density!
 
-def get_adjusted_hitobject(full_line, coordinate_array, d):  # Returns hit object timestamps, distance, direction, and specific type (length+end point too).
-    s = full_line.split(',')  # circle_jump, circle_stream_1, slider_jump, slider_stream_1
+def get_adjusted_hitobject(full_line, timestamp_array, coordinate_array, angle_array, d):  # Returns hit object timestamps, distance, direction, and specific type (length+end point too).
+    s = full_line.split(',')
     hitobject_type = int(s[3])
 
     if int(s[3]) == 12:
@@ -145,24 +145,25 @@ def get_adjusted_hitobject(full_line, coordinate_array, d):  # Returns hit objec
 
         coordinate = np.array([s[0], s[1]])
 
-        if not np.any(coordinate_array):
+        if coordinate not np.any(coordinate_array):
             distance = 0
         else:
             distance = np.linalg.norm(coordinate, coordinate_array[d - 1])
+            
+        
 
         
 
 
    # else:  # If hit object in question is a slider.
 
-    # return timestamp, specific_type, coordinate, distance, angle, length
+    # return timestamp, coordinate, distance, angle, length
 
 def get_adjusted_density(map, path_to_map, ms):
     c = 0  # The variable "c" acts like a line counter.
     d = 0
     timestamp_array = np.empty(0, dtype=float)
 
-    specific_type_array = np.empty(0, dtype=int)
     coordinate_array = np.empty(0, dtype=int)
     distance_array = np.empty(0, dtype=float)
     angle_array = np.empty(0, dtype=float)
@@ -178,17 +179,15 @@ def get_adjusted_density(map, path_to_map, ms):
 
     for line in map:
         c = c + 1  # Start counting line again after [HitObjects]
-        d = d + 1  # For purpose of indexing coordinate_array to get distances
+        d = d + 1  # For indexing purposes, since line is not an integer
         full_line = (linecache.getline(path_to_map, c))
         if get_adjusted_hitobject(full_line, coordinate_array, d) != 'spinner':  # skips every spinner
-            timestamp, specific_type, coordinate, distance, angle, length = get_adjusted_hitobject(full_line)
+            timestamp, coordinate, distance, angle = get_adjusted_hitobject(full_line)
 
             timestamp_array = np.append(timestamp_array, timestamp)
-            specific_type_array = np.append(specific_type_array, specific_type)
             coordinate_array = np.append(coordinate_array, coordinate)
             distance_array = np.append(distance_array, distance)
             angle_array = np.append(angle_array, angle)
-            length_array = np.append(length_array, length)
 
 def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
     map = open(path_to_map, 'r', encoding='utf-8')
