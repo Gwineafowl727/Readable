@@ -130,20 +130,22 @@ def get_raw_density(map, path_to_map, ms):
 
 # working on adjusted density!
 
-def get_angle(coordinate, coordinate_array, d):  # I don't understand the math behind this, it is copy and pasted from some website. Basically, it gets the angle in which you have to change direction to aim at the object being calculated.
+def get_angle_multiplier(coordinate, coordinate_array, d):  # I don't understand most of the math behind this. Basically, it gets the angle in which you have to change direction to aim at the object being calculated.
 	a = coordinate
 	b = np.array(coordinate_array[d])
-	c = np.array(coordinate_array[d])
+	c = np.array(coordinate_array[d-1])
 
 	ba = a - b
 	bc = c - b
 
 	cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
-	angle = np.arccos(cosine_angle)
+	angle = np.arccos(cosine_angle)  # Angle between vectors
 
-	return np.degrees(angle)
+	turn = np.abs(180 - np.degrees(angle))  # Subtracted from 180 to find angle in which you need to turn cursor trajectory.
+ 
+    return (numpy.sin(turn / 2)) ** 0.34  # https://www.desmos.com/calculator/dvgt9ppnnh The greater the angle, the closer it gets to a multiplier of 1.
 
-def get_adjusted_hitobject(full_line, timestamp_array, coordinate_array, angle_array, d):  # Returns hit object timestamps, distance, direction, and specific type (length+end point too).
+def get_adjusted_hitobject(full_line, timestamp_array, coordinate_array, angle_array, d):
     s = full_line.split(',')
     hitobject_type = int(s[3])
 
@@ -160,9 +162,10 @@ def get_adjusted_hitobject(full_line, timestamp_array, coordinate_array, angle_a
             distance = 0
         else:
             distance = np.linalg.norm(coordinate, coordinate_array[d])
-            
-		angle = get_angle(coordinate, coordinate_array, d)
-
+        
+        if d >= 3:    
+		    angle = get_angle(coordinate, coordinate_array, d)
+            angle_multiplier = 
 		length = 0
 
     else:  # If hit object in question is a slider.
@@ -220,9 +223,9 @@ def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
         density_data = (get_raw_density(map, path_to_map, ms))
         print(density_data)
     
-    #else:
-    #    data = (get_adjusted_density(map, path_to_map, ms))
+    else:
+        data = (get_adjusted_density(map, path_to_map, ms))
 
 np.set_printoptions(threshold=sys.maxsize)
 
-start_new_map('cycle hit.osu', 1, 0, 0, 0, 0)
+start_new_map('cycle hit.osu', 1, 0, 0, 0, 1)
