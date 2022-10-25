@@ -154,12 +154,12 @@ def get_adjusted_hitobject(full_line, timestamp_array, coordinate_array, d):
 	if int(s[3]) == 12:
 		return 'spinner'  # a hit object that is a spinner will not contribute to density.
 
-	elif bin(hitobject_type).endswith(1):  # If hit object in question is a circle.
+	elif bin(hitobject_type).endswith('1'):  # If hit object in question is a circle.
 
-		if not np.any(coordinate_array):
-			distance = 0
+		if d == 1:
+			distance_multiplier = 1
 		else:
-			distance = np.linalg.norm(coordinate, coordinate_array[d])
+			distance = np.linalg.norm(coordinate - coordinate_array[d - 2])
 			distance_multiplier = (np.sin(distance)) ** 0.2 * (6/5)  # https://www.desmos.com/calculator/uvqlhh12fm So that spaced streams reading difficulty is better represented.
 		
 		if d >= 3:    
@@ -199,7 +199,7 @@ def get_adjusted_density(map, path_to_map, ms):
 
 			timestamp_array = np.append(timestamp_array, timestamp)
 			coordinate_array = np.append(coordinate_array, coordinate)
-
+			print(coordinate_array)
 			adjusted_density_array = np.append(adjusted_density_array, density)
 
 	return np.reshape(np.append(raw_timestamp_array, raw_density_array, axis=0), newshape=(2, circle_amount))  # Combines time and density arrays into 2d array.
@@ -222,4 +222,4 @@ def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
 
 np.set_printoptions(threshold=sys.maxsize)
 
-start_new_map('stream.osu', 1, 0, 0, 0, 1)
+start_new_map('stream.osu', 0, 0, 0, 0, 1)
