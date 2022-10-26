@@ -109,7 +109,7 @@ def get_raw_density(map, path_to_map, ms):
 			raw_timestamp_array = np.append(raw_timestamp_array, time)
 
 	circle_amount = (np.count_nonzero(raw_timestamp_array, axis=None))
-	for i in range(0, (circle_amount)):  # The variable "i" represents the particular circle being analyzed.
+	for i in range(0, circle_amount):  # The variable "i" represents the particular circle being analyzed.
 		circles_on_screen = 1
 		if i == (circle_amount - 1):
 			raw_density_array = np.append(raw_density_array, circles_on_screen)
@@ -130,6 +130,12 @@ def get_raw_density(map, path_to_map, ms):
 
 # working on adjusted density!
 
+def get_distance(point_1, point_2):
+    array_1, array_2 = np.array(point_1), np.array(point_2)
+    squared_distance = np.sum(np.square(array_1 - array_2))
+    distance = np.sqrt(squared_distance)
+    return distance
+
 def get_angle_multiplier(coordinate, coordinate_array, d):  # I don't understand most of the math behind this. Basically, it gets the angle in which you have to change direction to aim at the object being calculated.
 	a = coordinate
 	b = np.array(coordinate_array[d])
@@ -148,8 +154,8 @@ def get_angle_multiplier(coordinate, coordinate_array, d):  # I don't understand
 def get_adjusted_hitobject(full_line, timestamp_array, coordinate_array, d):
 	s = full_line.split(',')
 	hitobject_type = int(s[3])
-	coordinate = np.array([s[0], s[1]])
-	timestamp = s[2]
+	coordinate = np.array([int(s[0]), int(s[1])], dtype=int)
+	timestamp = int(s[2])
 
 	if int(s[3]) == 12:
 		return 'spinner'  # a hit object that is a spinner will not contribute to density.
@@ -159,7 +165,8 @@ def get_adjusted_hitobject(full_line, timestamp_array, coordinate_array, d):
 		if d == 1:
 			distance_multiplier = 1
 		else:
-			distance = np.linalg.norm(coordinate - coordinate_array[d - 2])
+
+			distance = get_distance(coordinate, coordinate_array[d - 2])
 			distance_multiplier = (np.sin(distance)) ** 0.2 * (6/5)  # https://www.desmos.com/calculator/uvqlhh12fm So that spaced streams reading difficulty is better represented.
 		
 		if d >= 3:    
@@ -173,6 +180,22 @@ def get_adjusted_hitobject(full_line, timestamp_array, coordinate_array, d):
 
 	return timestamp, coordinate, density
 
+def get_density_per_timestamp(timestamp_array, density_per_hitobject, ms, circle_amount):
+    density_per_timestamp = np.empty(0, dtype=float)
+    for i in range(0, circle_amount):
+        circles_on_screen = 1
+        for j in range(1, circle_amount):
+			if timestamp_array[i] - timestamp_array[i + j] < ms:
+                circles_on_screen = circles_on_screen + 1
+			else:
+				continue
+		sum = 0
+		for k in range(i, (i + circles_on_screen - 1)):
+			sum = sum + density_per_hitobject[k]
+		density_per_timestamp = np.append(density_per_timestamp, sum, axis=0)
+            
+        
+
 def get_adjusted_density(map, path_to_map, ms):
 	c = 0  # For acting like a line counter.
 	d = 0  # For indexing purposes.
@@ -181,7 +204,7 @@ def get_adjusted_density(map, path_to_map, ms):
 
 	coordinate_array = np.empty(0, dtype=int)
 
-	adjusted_density_array = np.empty(0, dtype=float)
+	density_per_hitobject = np.empty(0, dtype=float)
 
 	for line in map:
 		c = c + 1
@@ -199,10 +222,13 @@ def get_adjusted_density(map, path_to_map, ms):
 
 			timestamp_array = np.append(timestamp_array, timestamp)
 			coordinate_array = np.append(coordinate_array, coordinate)
-			print(coordinate_array)
-			adjusted_density_array = np.append(adjusted_density_array, density)
+			density_per_hitobject = np.append(density_per_hitobject, density)
 
-	return np.reshape(np.append(raw_timestamp_array, raw_density_array, axis=0), newshape=(2, circle_amount))  # Combines time and density arrays into 2d array.
+	circle_amount = (np.count_nonzero(timestamp_array, axis=None))
+ 
+	density_per_timestamp = get_density_per_timestamp(timestamp_array, density_per_hitobject, ms, circle_amount)
+ 
+	return np.reshape(np.append(timestamp_array, density_per_timestamp, axis=0), newshape=(2, circle_amount))  # Combines time and density arrays into 2d array.
 
 def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
 	map = open(path_to_map, 'r', encoding='utf-8')
@@ -215,11 +241,12 @@ def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
 		ms = ar_to_ms(ar)  # Gets the "ms" value, in case there are no mods enabled
 	if adjust == 0:  # Make a new function during app development
 		density_data = (get_raw_density(map, path_to_map, ms))
-		print(density_data)
 	
 	else:
-		data = (get_adjusted_density(map, path_to_map, ms))
-
+		density_data = (get_adjusted_density(map, path_to_map, ms))
+	return density_data
+  
+	# print(density_data)
 np.set_printoptions(threshold=sys.maxsize)
 
-start_new_map('stream.osu', 0, 0, 0, 0, 1)
+print(start_new_map('stream.osu', 0, 0, 0, 0, 1))
