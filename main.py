@@ -159,19 +159,26 @@ def get_adjusted_hitobject(line, timestamp_array, coordinate_array, d):
 
 	elif bin(hitobject_type).endswith('1'):  # If hit object in question is a circle.
 
-		if d == 1:
-			distance_multiplier = 1
-		else:
+		length_multiplier = 1
 
-			distance = get_distance(coordinate, coordinate_array[d - 2])
-			distance_multiplier = (np.sin((distance * 9) / 8000)) ** 0.2 * (6/5)  # https://www.desmos.com/calculator/smxmzvasad So that spaced streams reading difficulty is better represented.
+	else:  # If hit object in question is a slider. should produce length_multiplier
+		raw_length = float(s[7])
+
+
+
+	if d == 1:
+		distance_multiplier = 1
+	else:
+
+		distance = get_distance(coordinate, coordinate_array[d - 2])
+		distance_multiplier = (np.sin((distance * 9) / 8000)) ** 0.2 * (6/5)  # https://www.desmos.com/calculator/smxmzvasad
 		
-		if d >= 3:    
-			angle_multiplier = get_angle_multiplier(coordinate, coordinate_array, d)
-		else:
-			angle_multiplier = 1
+	if d >= 3:    
+		angle_multiplier = get_angle_multiplier(coordinate, coordinate_array, d)
+	else:
+		angle_multiplier = 1
 
-		density = distance_multiplier * angle_multiplier
+	density = distance_multiplier * angle_multiplier * length_multiplier
 
 	return timestamp, coordinate, density
 
