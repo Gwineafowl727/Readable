@@ -134,21 +134,28 @@ def get_distance(point_1, point_2):
     return distance
 
 def get_angle_multiplier(coordinate, coordinate_array, d):  # I don't understand most of the math behind this. Basically, it gets the angle in which you have to change direction to aim at the object being calculated.
-	a = coordinate
-	b = np.array(coordinate_array[d - 2])
-	c = np.array(coordinate_array[d - 3])
+	if np.array_equal(coordinate, coordinate_array[d-3]):
+		turn = 180
+	elif np.array_equal(coordinate, coordinate_array[d-2]):
+		return 1
+	else:
 
-	ba = a - b
-	bc = c - b
+		a = coordinate
+		b = np.array(coordinate_array[d - 2])
+		c = np.array(coordinate_array[d - 3])
 
-	cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
-	angle = np.arccos(cosine_angle)  # Angle between vectors
+		ba = a - b
+		bc = c - b
 
-	turn = np.abs(180 - np.degrees(angle))  # Subtracted from 180 to find angle in which you need to turn cursor trajectory.
-	
-	return (np.sin(np.radians(turn / 2))) ** 0.34 + 1  # https://www.desmos.com/calculator/827fzoofho The greater the angle, the closer it gets to a multiplier of 1.
+		cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+		angle = np.arccos(cosine_angle)  # Angle between vectors
 
-def get_adjusted_hitobject(line, timestamp_array, coordinate_array, d):
+		turn = np.abs(180 - np.degrees(angle))  # Subtracted from 180 to find angle in which you need to turn cursor trajectory.
+
+	angle_multiplier = (np.sin(np.radians(turn / 2))) ** 0.34 + 1  # https://www.desmos.com/calculator/827fzoofho The greater the angle, the closer it gets to a multiplier of 1.
+	return angle_multiplier 
+
+def get_adjusted_hitobject(line, coordinate_array, d):
 	s = line.split(',')
 	hitobject_type = int(s[3])
 	coordinate = np.array([int(s[0]), int(s[1])], dtype=int)
@@ -163,8 +170,7 @@ def get_adjusted_hitobject(line, timestamp_array, coordinate_array, d):
 
 	else:  # If hit object in question is a slider. should produce length_multiplier
 		raw_length = float(s[7])
-
-
+		length_multiplier = (raw_length / 10000) ** (1/3) + 1  # https://www.desmos.com/calculator/dl1o5rqfw8
 
 	if d == 1:
 		distance_multiplier = 1
@@ -187,15 +193,19 @@ def get_density_per_timestamp(timestamp_array, density_per_hitobject, ms, circle
 	for i in range(0, circle_amount):
 		circles_on_screen = 1
 		for j in range(1, circle_amount):
-			if i + j == circle_amount:  # Prevents next elif from checking for index of circle_amount (index is nonexistent), which breaks program.
-				break
-			elif timestamp_array[i + j] - timestamp_array[i] < ms:
+			try:
+				timestamp_array[i +j]
+			except:
+				continue
+			if timestamp_array[i + j] - timestamp_array[i] < ms:
 				circles_on_screen = circles_on_screen + 1
 			else:
 				break
 		sum = 0
-		for k in range(i, (i + circles_on_screen)):
-			sum = sum + density_per_hitobject[k]
+		for k in range(i, (i + circles_on_screen - 1)):
+			if k != (circles_on_screen - 1):
+				sum = sum + density_per_hitobject[k]
+
 		density_per_timestamp = np.append(density_per_timestamp, sum)
 	return density_per_timestamp
 
@@ -216,7 +226,7 @@ def get_adjusted_density(map, path_to_map, ms):
 	for line in map:
 		d = d + 1  # For indexing purposes, since line is not an integer
 
-		timestamp, coordinate, density = get_adjusted_hitobject(line, timestamp_array, coordinate_array, d)
+		timestamp, coordinate, density = get_adjusted_hitobject(line, coordinate_array, d)
 		if timestamp != 'spinner':  # skips every spinner
 			
 
@@ -252,4 +262,4 @@ def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
 	# print(density_data)
 np.set_printoptions(threshold=sys.maxsize, suppress=True)
 
-print(start_new_map('stream.osu', 0, 0, 0, 0, 1))
+print(start_new_map('cycle hit.osu', 0, 0, 0, 0, 1))
