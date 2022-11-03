@@ -134,9 +134,9 @@ def get_distance(point_1, point_2):
     return distance
 
 def get_angle_multiplier(coordinate, coordinate_array, d):  # I don't understand most of the math behind this. Basically, it gets the angle in which you have to change direction to aim at the object being calculated.
-	if np.array_equal(coordinate, coordinate_array[d-3]):
+	if np.array_equal(coordinate, coordinate_array[d-3]) and (not np.array_equal(coordinate_array[d-2], coordinate_array[d-3])):
 		turn = 180
-	elif np.array_equal(coordinate, coordinate_array[d-2]):
+	elif np.array_equal(coordinate, coordinate_array[d-2]) or np.array_equal(coordinate_array[d-2], coordinate_array[d-3]):
 		return 1
 	else:
 
@@ -148,7 +148,10 @@ def get_angle_multiplier(coordinate, coordinate_array, d):  # I don't understand
 		bc = c - b
 
 		cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
-		angle = np.arccos(cosine_angle)  # Angle between vectors
+		if np.isnan(cosine_angle):
+			angle = 0
+		else:
+			angle = np.arccos(cosine_angle)  # Angle between vectors
 
 		turn = np.abs(180 - np.degrees(angle))  # Subtracted from 180 to find angle in which you need to turn cursor trajectory.
 
@@ -177,7 +180,10 @@ def get_adjusted_hitobject(line, coordinate_array, d):
 	else:
 
 		distance = get_distance(coordinate, coordinate_array[d - 2])
-		distance_multiplier = (np.sin((distance * 9) / 8000)) ** 0.2 * (6/5)  # https://www.desmos.com/calculator/smxmzvasad
+		if distance == 0:
+			distance_multiplier = 1
+		else:
+			distance_multiplier = (np.sin(np.radians((distance * 9) / 8000))) ** 0.2 * (6/5)  # https://www.desmos.com/calculator/smxmzvasad
 		
 	if d >= 3:    
 		angle_multiplier = get_angle_multiplier(coordinate, coordinate_array, d)
@@ -190,11 +196,11 @@ def get_adjusted_hitobject(line, coordinate_array, d):
 
 def get_density_per_timestamp(timestamp_array, density_per_hitobject, ms, circle_amount):
 	density_per_timestamp = np.empty(0, dtype=float)
-	for i in range(0, circle_amount):
+	for i in range(0, circle_amount - 1):
 		circles_on_screen = 1
 		for j in range(1, circle_amount):
 			try:
-				timestamp_array[i +j]
+				timestamp_array[i + j]
 			except:
 				continue
 			if timestamp_array[i + j] - timestamp_array[i] < ms:
