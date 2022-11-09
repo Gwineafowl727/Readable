@@ -133,7 +133,14 @@ def get_distance(point_1, point_2):
     distance = np.sqrt(squared_distance)
     return distance
 
-def get_adjusted_hitobject()
+def get_adjusted_hitobject(line, p, timestamps, coords, angles):
+    line_stats = line.split(',')
+    
+    ts = line_stats[2]
+    coordinate = np.array(line_stats[0], line_stats[1])
+    
+
+	return ts, coordinate, angle, density
 
 '''def get_density_per_timestamp(timestamps, densities, ms, circle_amount):
 	density_per_timestamp = np.empty(0, dtype=float)
@@ -172,7 +179,7 @@ def get_adjusted_density(map, path_to_map, ms):
 	for line in map:
 		p += 1  # For indexing purposes, since line is not an integer
 
-		ts, coordinate, angle, density = get_adjusted_hitobject(line, p, timestamps, coords,)
+		ts, coordinate, angle, density = get_adjusted_hitobject(line, p, timestamps, coords, angles)
 		if ts != 'spinner':  # skips every spinner
 			
 
