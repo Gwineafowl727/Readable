@@ -140,6 +140,19 @@ def get_orientation(coord, coordinates):
 
 def get_angle(p, coord, coordinates):
 	orientation = get_orientation(coord, coordinates)
+	if orientation == 'clockwise' or 'counterclockwise':
+
+		a = coord
+		b = coordinates[p]
+		c = coordinates[p - 1]
+
+		ba = a - b
+		bc = c - b
+
+		cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+		angle = np.arccos(cosine_angle)
+		
+
 	
 
 def get_distance(point_1, point_2):
