@@ -1,4 +1,3 @@
-import linecache
 import sys
 import numpy as np
 
@@ -115,7 +114,7 @@ def get_raw_density(map, path_to_map, ms):
 			continue
 		else:
 			for j in range(1, circle_amount):
-				if i + j == circle_amount:  # Prevents next elif from checking for index of circle_amount (index is nonexistent), which breaks program.
+				if i + j == circle_amount:  # Band-aid solution to prevent next elif from checking for index of circle_amount (index is nonexistent), which breaks program.
 					break
 				elif timestamps[i + j] - timestamps[i] < ms:
 					circles_on_screen = circles_on_screen + 1
@@ -127,20 +126,36 @@ def get_raw_density(map, path_to_map, ms):
 
 # working on adjusted density!
 
+def get_angle(p, coord, coordinates, ts, timestamps):
+	x1, y1, x2, y2, x3, y3 = coord[0], coord[1], coordinates[p, 0], coordinates[p, 1], coordinates[p, 0], coordinates[p, 1]
+
+	slope1 = (y2 - y1) * (x3 - x2)
+	slope2 = (y2 - y1) * (x3 - x2)
+
+	
+
 def get_distance(point_1, point_2):
-    array_1, array_2 = np.array(point_1), np.array(point_2)
-    squared_distance = np.sum(np.square(array_1 - array_2))
-    distance = np.sqrt(squared_distance)
-    return distance
+    squared_distance = np.sum(np.square(point_1 - point_2))
+    return np.sqrt(squared_distance)
 
-def get_adjusted_hitobject(line, p, timestamps, coords, angles):
-    line_stats = line.split(',')
-    
-    ts = line_stats[2]
-    coordinate = np.array(line_stats[0], line_stats[1])
-    
+def get_adjusted_hitobject(line, p, ms, timestamps, coordinates, angles):
+	line_stats = line.split(',')
 
-	return ts, coordinate, angle, density
+	hitobject_type = line_stats[3]
+    
+	if hitobject_type == 12:
+		return 'spinner', 'spinner', 'spinner', 'spinner'
+    
+	ts = line_stats[2]
+	coord = np.array(line_stats[0], line_stats[1])
+
+	if ts - timestamps[p] < ms:  # Check if the previous hit object is within the time frame to form a line segment
+		distance = get_distance(coord, coordinates[p])
+
+		if ts - timestamps[p - 1] < ms:  # Check if the 2nd previous hit object is within the time fram to form a triangle with three points
+			angle = get_angle(p, coord, coordinates)
+
+	return ts, coord, angle, density
 
 '''def get_density_per_timestamp(timestamps, densities, ms, circle_amount):
 	density_per_timestamp = np.empty(0, dtype=float)
@@ -167,7 +182,7 @@ def get_adjusted_density(map, path_to_map, ms):
 	p = -1  # For indexing purposes.
 
 	timestamps = np.empty(0, dtype=int)
-	coords = np.empty(0, dtype=int)
+	coordinates = np.empty(0, dtype=int)
 	angles = np.empty(0, dtype=float)
 	densities = np.empty(0, dtype=float)
 
@@ -179,12 +194,11 @@ def get_adjusted_density(map, path_to_map, ms):
 	for line in map:
 		p += 1  # For indexing purposes, since line is not an integer
 
-		ts, coordinate, angle, density = get_adjusted_hitobject(line, p, timestamps, coords, angles)
+		ts, coord, angle, density = get_adjusted_hitobject(line, p, ms, timestamps, coordinates, angles)
 		if ts != 'spinner':  # skips every spinner
 			
-
 			timestamps = np.append(timestamps, ts)
-			coords = np.append(coords, coordinate)  # add reshape with p
+			coordinates = np.append(coordinates, coord)  # add reshape with p
 			angles = np.append(angles, angle)
 			densities = np.append(densities, density)
  
