@@ -125,13 +125,21 @@ def get_raw_density(map, path_to_map, ms):
 	return np.reshape(np.append(timestamps, density_array, axis=0), newshape=(2, circle_amount))  # Combines time and density arrays into 2d array.
 
 # working on adjusted density!
-
-def get_angle(p, coord, coordinates, ts, timestamps):
+def get_orientation(coord, coordinates):
 	x1, y1, x2, y2, x3, y3 = coord[0], coord[1], coordinates[p, 0], coordinates[p, 1], coordinates[p, 0], coordinates[p, 1]
 
-	slope1 = (y2 - y1) * (x3 - x2)
-	slope2 = (y2 - y1) * (x3 - x2)
+	slope1 = (y2 - y1) * (x2 - x1)
+	slope2 = (y3 - y2) * (x3 - x2)
 
+	if slope1 > slope2:
+		return 'clockwise'
+	elif slope1 < slope2:
+		return 'counterclockwise'
+	else:
+		return 'collinear'
+
+def get_angle(p, coord, coordinates):
+	orientation = get_orientation(coord, coordinates)
 	
 
 def get_distance(point_1, point_2):
