@@ -136,11 +136,21 @@ def get_orientation(coord, coordinates):
 	elif slope1 < slope2:
 		return 'counterclockwise'
 	else:
-		return 'collinear'
+		if ((x2 <= x1 <= x3) or (x3 <= x1 <= x2)) and ((y2 <= y1 <= y3) or (y3 <= y1 <= y2)):
+			return 'collinear-reverse'
+		else:
+			return 'collinear-straight'
 
-def get_angle(p, coord, coordinates):
+def get_angle(p, coord, coordinates, angles):
 	orientation = get_orientation(coord, coordinates)
-	if orientation == 'clockwise' or 'counterclockwise':
+
+	if orientation == 'collinear-straight':
+		angle = 0
+
+	elif orientation == 'collinear-reverse':
+		angle = 180
+
+	elif orientation == 'clockwise' or 'counterclockwise':
 
 		a = coord
 		b = coordinates[p]
@@ -151,9 +161,14 @@ def get_angle(p, coord, coordinates):
 
 		cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
 		angle = np.arccos(cosine_angle)
-		
 
-	
+		if angle ^ angles[p] < 0:  # Adjusts for if they are opposite orientations
+			angle = angle + np.abs(angles[p])
+
+		if orientation == 'counterclockwise':
+			angle = -angle
+
+	return angle
 
 def get_distance(point_1, point_2):
     squared_distance = np.sum(np.square(point_1 - point_2))
@@ -164,11 +179,15 @@ def get_adjusted_hitobject(line, p, ms, timestamps, coordinates, angles):
 
 	hitobject_type = line_stats[3]
     
-	if hitobject_type == 12:
+	if hitobject_type == 12:  # Rules out inclusion of spinners in data
 		return 'spinner', 'spinner', 'spinner', 'spinner'
     
 	ts = line_stats[2]
 	coord = np.array(line_stats[0], line_stats[1])
+
+	distance = 0
+	angle = 0
+	stack = 0
 
 	if ts - timestamps[p] < ms:  # Check if the previous hit object is within the time frame to form a line segment
 		distance = get_distance(coord, coordinates[p])
@@ -176,28 +195,9 @@ def get_adjusted_hitobject(line, p, ms, timestamps, coordinates, angles):
 		if ts - timestamps[p - 1] < ms:  # Check if the 2nd previous hit object is within the time fram to form a triangle with three points
 			angle = get_angle(p, coord, coordinates)
 
+
+
 	return ts, coord, angle, density
-
-'''def get_density_per_timestamp(timestamps, densities, ms, circle_amount):
-	density_per_timestamp = np.empty(0, dtype=float)
-	for i in range(0, circle_amount - 1):
-		circles_on_screen = 1
-		for j in range(1, circle_amount):
-			try:
-				timestamps[i + j]
-			except:
-				continue
-			if timestamps[i + j] - timestamps[i] < ms:
-				circles_on_screen = circles_on_screen + 1
-			else:
-				break
-		sum = 0
-		for k in range(i, (i + circles_on_screen - 1)):
-			if k != (circles_on_screen - 1):
-				sum = sum + densities[k]
-
-		density_per_timestamp = np.append(density_per_timestamp, sum)
-	return density_per_timestamp'''
 
 def get_adjusted_density(map, path_to_map, ms):
 	p = -1  # For indexing purposes.
