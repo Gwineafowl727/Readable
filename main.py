@@ -141,7 +141,7 @@ def get_orientation(coord, coordinates):
 		else:
 			return 'collinear-straight'
 
-def get_angle(p, coord, coordinates):
+def get_angle(p, coord, coordinates, angles):
 	orientation = get_orientation(coord, coordinates)
 
 	if orientation == 'collinear-straight':
@@ -162,7 +162,14 @@ def get_angle(p, coord, coordinates):
 		cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
 		angle = np.arccos(cosine_angle)
 
+<<<<<<< HEAD
 		if orientation == 'clockwise':
+=======
+		if angle ^ angles[p] < 0:  # Adjusts for if they are opposite orientations
+			angle = angle + np.abs(angles[p])
+
+		if orientation == 'counterclockwise':
+>>>>>>> f72992ca0f33575bac53db47e41f8500891ea969
 			angle = -angle
 
 	return angle
@@ -198,16 +205,24 @@ def get_adjusted_hitobject(line, p, ms, timestamps, coordinates, angles):
 	angle = 0
 	stack = 0
 
+	distance = 0
+	angle = 0
+	stack = 0
+
 	if ts - timestamps[p] < ms:  # Check if the previous hit object is within the time frame to form a line segment
 		distance = get_distance(coord, coordinates[p])
 
 		if ts - timestamps[p - 1] < ms:  # Check if the 2nd previous hit object is within the time fram to form a triangle with three points
 			angle = get_angle(p, coord, coordinates)
 
+<<<<<<< HEAD
 	distance_factor = get_distance_factor(distance)
 	angle_factor = get_angle_factor(p, angle, angles)
  
 	density = distance_factor * angle_factor
+=======
+
+>>>>>>> f72992ca0f33575bac53db47e41f8500891ea969
 
 	return ts, coord, angle, density
 
