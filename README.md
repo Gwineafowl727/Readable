@@ -3,10 +3,6 @@ This is a tool under development for using an [osu!](https://osu.ppy.sh/home) ma
 
 Please see this repository's wiki for details on design philosophy and documentation (coming soon).
 
-# Installation
-
-Coming soon, as soon as I have made GUI.
-
 # Why am I making this program? What game even is this anyway?
 
 [osu!](https://osu.ppy.sh/home) is a free-to-play rhythm game where you hit circles to the beat of a song, to the best of your ability. As a player, you need to hover your cursor over each circle or slider and click or drag (usually done with two keys on your keyboard, while the other hand controls the cursor) with precise timing, all without losing rhythm, endurance, or composure while being as accurate as possible.
