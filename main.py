@@ -162,14 +162,7 @@ def get_angle(p, coord, coordinates, angles):
 		cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
 		angle = np.arccos(cosine_angle)
 
-<<<<<<< HEAD
 		if orientation == 'clockwise':
-=======
-		if angle ^ angles[p] < 0:  # Adjusts for if they are opposite orientations
-			angle = angle + np.abs(angles[p])
-
-		if orientation == 'counterclockwise':
->>>>>>> f72992ca0f33575bac53db47e41f8500891ea969
 			angle = -angle
 
 	return angle
@@ -178,32 +171,58 @@ def get_distance(point_1, point_2):
     squared_distance = np.sum(np.square(point_1 - point_2))
     return np.sqrt(squared_distance)
 
+def get_distance_diff(p, distance, coordinates):
+	return distance - get_distance(coordinates[p], coordinates[p - 1])
+
+def get_stack_obscurity(p, coord, coordinates, ts, timestamps, ms, hitobjects):
+	back_count = p
+
+	while ts - timestamps[back_count] < ms:
+		back_count -= 1
+
+		if np.array_equal(coord, coordinates[back_count]):
+			obscurity = (ts - timestamps[back_count]) / ms
+
+			if hitobjects[back_count] == 'slider':
+				obscurity = obscurity / 2
+
+	return obscurity
+
 def get_distance_factor(distance):
     return (np.log10(distance / 10)) / 3 + 0.595  # https://www.desmos.com/calculator/q53zdovpss
 
 def get_angle_factor(p, angle, angles):
-	if np.sign(angle) == np.sign(angles[p]):
+	if np.sign(angle) != np.sign(angles[p]):
 		resulting = np.abs(angle) + np.abs(angles[p])
 	else:
 		resulting = angle
 
 	return ((np.sin(resulting / 458.5)) ** 0.34) + 1  # https://www.desmos.com/calculator/ug1xywioa3
 
+def get_length_factor(hitobject_type, line_stats):
+	if hitobject_type == 'circle':
+		return 1
+	else:
+		length = float(line_stats[7])
+		return np.cbrt(length / 10000) + 1
 
-def get_adjusted_hitobject(line, p, ms, timestamps, coordinates, angles):
+def get_stack_factor(stack):
+	return ((-1) * np.log10(stack + 2)) + 1.55
+
+def get_adjusted_hitobject(line, p, ms, hitobjects, timestamps, coordinates, angles):
 	line_stats = line.split(',')
 
-	hitobject_type = line_stats[3]
+	hitobject_type = int(line_stats[3])
     
 	if hitobject_type == 12:  # Rules out inclusion of spinners in data
-		return 'spinner', 'spinner', 'spinner', 'spinner'
-    
-	ts = line_stats[2]
-	coord = np.array(int(line_stats[0]), int(line_stats[1]))
+		return 'spinner'
+	elif bin(hitobject_type).endswith('1'):
+		hitobject_type = 'circle'
+	else:
+		hitobject_type = 'slider'
 
-	distance = 0
-	angle = 0
-	stack = 0
+	ts = int(line_stats[2])
+	coord = np.array(int(line_stats[0]), int(line_stats[1]))
 
 	distance = 0
 	angle = 0
@@ -211,24 +230,24 @@ def get_adjusted_hitobject(line, p, ms, timestamps, coordinates, angles):
 
 	if ts - timestamps[p] < ms:  # Check if the previous hit object is within the time frame to form a line segment
 		distance = get_distance(coord, coordinates[p])
+		stack = get_stack_obscurity(p, coord, coordinates, ts, timestamps, ms, hitobjects)
 
 		if ts - timestamps[p - 1] < ms:  # Check if the 2nd previous hit object is within the time fram to form a triangle with three points
 			angle = get_angle(p, coord, coordinates)
 
-<<<<<<< HEAD
 	distance_factor = get_distance_factor(distance)
 	angle_factor = get_angle_factor(p, angle, angles)
+
+	length_factor = get_length_factor(hitobject_type, line_stats)
  
-	density = distance_factor * angle_factor
-=======
+	density = distance_factor * distance_diff_factor * angle_factor * length_factor * stack_factor
 
->>>>>>> f72992ca0f33575bac53db47e41f8500891ea969
-
-	return ts, coord, angle, density
+	return hitobject_type, ts, coord, angle, density
 
 def get_adjusted_density(map, path_to_map, ms):
 	p = -1  # For indexing purposes.
 
+	hitobjects = np.empty(0, dtype=str)
 	timestamps = np.empty(0, dtype=int)
 	coordinates = np.empty(0, dtype=int)
 	angles = np.empty(0, dtype=float)
@@ -242,13 +261,17 @@ def get_adjusted_density(map, path_to_map, ms):
 	for line in map:
 		p += 1  # For indexing purposes, since line is not an integer
 
-		ts, coord, angle, density = get_adjusted_hitobject(line, p, ms, timestamps, coordinates, angles)
-		if ts != 'spinner':  # skips every spinner
+		hitobject_type, ts, coord, angle, density = get_adjusted_hitobject(line, p, ms, hitobjects, timestamps, coordinates, angles)
+		if hitobject_type != 'spinner':  # skips every spinner
 			
+			hitobjects = np.append(hitobjects, hitobject_type)
 			timestamps = np.append(timestamps, ts)
 			coordinates = np.append(coordinates, coord)  # add reshape with p
 			angles = np.append(angles, angle)
 			densities = np.append(densities, density)
+
+		else:
+			p -= 1
  
 	density_per_timestamp = get_density_per_timestamp(timestamps, densities, ms, circle_amount)
 
