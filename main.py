@@ -125,7 +125,7 @@ def get_raw_density(map, path_to_map, ms):
 	return np.reshape(np.append(timestamps, density_array, axis=0), newshape=(2, circle_amount))  # Combines time and density arrays into 2d array.
 
 # working on adjusted density!
-def get_orientation(coord, coordinates):
+def get_orientation(p, coord, coordinates):
 	x1, y1, x2, y2, x3, y3 = coord[0], coord[1], coordinates[p, 0], coordinates[p, 1], coordinates[p, 0], coordinates[p, 1]
 
 	slope1 = (y2 - y1) * (x2 - x1)
@@ -141,8 +141,8 @@ def get_orientation(coord, coordinates):
 		else:
 			return 'collinear-straight'
 
-def get_angle(p, coord, coordinates, angles):
-	orientation = get_orientation(coord, coordinates)
+def get_angle(p, coord, coordinates):
+	orientation = get_orientation(p, coord, coordinates)
 
 	if orientation == 'collinear-straight':
 		angle = 0
@@ -175,15 +175,14 @@ def get_distance_diff(p, distance, coordinates):
 	return distance - get_distance(coordinates[p], coordinates[p - 1])
 
 def get_stack_obscurity(p, coord, coordinates, ts, timestamps, ms, hitobjects):
-	back_count = p
+	obscurity = 1
 
-	while ts - timestamps[back_count] < ms:
-		back_count -= 1
+	for i in range(np.size(timestamps) - 1, -1, -1):
 
-		if np.array_equal(coord, coordinates[back_count]):
-			obscurity = (ts - timestamps[back_count]) / ms
+		if (ts - timestamps[i] < ms) and (np.array_equal(coord, coordinates[i])):
+			obscurity = (ts - timestamps[i]) / ms
 
-			if hitobjects[back_count] == 'slider':
+			if hitobjects[i] == 'slider':
 				obscurity = obscurity / 2
 
 	return obscurity
@@ -191,8 +190,16 @@ def get_stack_obscurity(p, coord, coordinates, ts, timestamps, ms, hitobjects):
 def get_distance_factor(distance):
     return (np.log10(distance / 10)) / 3 + 0.595  # https://www.desmos.com/calculator/q53zdovpss
 
+def get_distance_diff_factor(distance_diff):
+	if distance_diff > 0:
+		return ((np.log10((x + 170) / 10)) / 3) + 0.595
+	else:
+		return 1
+
 def get_angle_factor(p, angle, angles):
-	if np.sign(angle) != np.sign(angles[p]):
+	if p == 0:
+		return 1
+	elif np.sign(angle) != np.sign(angles[p]):
 		resulting = np.abs(angle) + np.abs(angles[p])
 	else:
 		resulting = angle
@@ -207,7 +214,10 @@ def get_length_factor(hitobject_type, line_stats):
 		return np.cbrt(length / 10000) + 1
 
 def get_stack_factor(stack):
-	return ((-1) * np.log10(stack + 2)) + 1.55
+	if stack != 1:
+		return ((-1) * np.log10(stack + 2)) + 1.55
+	else:
+		return 1
 
 def get_adjusted_hitobject(line, p, ms, hitobjects, timestamps, coordinates, angles):
 	line_stats = line.split(',')
@@ -222,30 +232,46 @@ def get_adjusted_hitobject(line, p, ms, hitobjects, timestamps, coordinates, ang
 		hitobject_type = 'slider'
 
 	ts = int(line_stats[2])
-	coord = np.array(int(line_stats[0]), int(line_stats[1]))
+	coord = np.array([(line_stats[0]), (line_stats[1])], dtype=int)
 
 	distance = 0
+	distance_diff = 0
 	angle = 0
 	stack = 0
 
-	if ts - timestamps[p] < ms:  # Check if the previous hit object is within the time frame to form a line segment
+	if p == -1:
+		distance_factor = 1
+		distance_diff_factor = 1
+		angle_factor = 1
+		stack_factor = 1
+
+	elif ts - timestamps[p] < ms:  # Check if the previous hit object is within the time frame to form a line segment
 		distance = get_distance(coord, coordinates[p])
 		stack = get_stack_obscurity(p, coord, coordinates, ts, timestamps, ms, hitobjects)
 
 		if ts - timestamps[p - 1] < ms:  # Check if the 2nd previous hit object is within the time fram to form a triangle with three points
 			angle = get_angle(p, coord, coordinates)
+			distance_diff = get_distance_diff(p, distance, coordinates)
 
-	distance_factor = get_distance_factor(distance)
-	angle_factor = get_angle_factor(p, angle, angles)
+		distance_factor = get_distance_factor(distance)
+		distance_diff_factor = get_distance_diff_factor(distance_diff)
+		angle_factor = get_angle_factor(p, angle, angles)
+		stack_factor = get_stack_factor(stack)
 
 	length_factor = get_length_factor(hitobject_type, line_stats)
- 
+
 	density = distance_factor * distance_diff_factor * angle_factor * length_factor * stack_factor
+
+	if hitobject_type == 'slider':
+		slider_stats = line_stats[5]
+		slider_stats = slider_stats.split('|')
+		last = (slider_stats[-1]).split(':')
+		coord = np.array(last, dtype=int)
 
 	return hitobject_type, ts, coord, angle, density
 
 def get_adjusted_density(map, path_to_map, ms):
-	p = -1  # For indexing purposes.
+	p = -2  # For indexing purposes.
 
 	hitobjects = np.empty(0, dtype=str)
 	timestamps = np.empty(0, dtype=int)
