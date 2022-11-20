@@ -162,6 +162,9 @@ def get_angle(p, coord, coordinates):
 		cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
 		angle = np.arccos(cosine_angle)
 
+		if np.isnan(angle):
+			angle = 0
+
 		if orientation == 'clockwise':
 			angle = -angle
 
@@ -188,11 +191,14 @@ def get_stack_obscurity(p, coord, coordinates, ts, timestamps, ms, hitobjects):
 	return obscurity
 
 def get_distance_factor(distance):
-    return (np.log10(distance / 10)) / 3 + 0.595  # https://www.desmos.com/calculator/q53zdovpss
+	if distance != 0:
+		return (np.log10(distance / 10)) / 3 + 0.595  # https://www.desmos.com/calculator/q53zdovpss
+	else:
+		return 0.4
 
 def get_distance_diff_factor(distance_diff):
 	if distance_diff > 0:
-		return ((np.log10((x + 170) / 10)) / 3) + 0.595
+		return ((np.log10((distance_diff + 170) / 10)) / 3) + 0.595
 	else:
 		return 1
 
@@ -202,7 +208,7 @@ def get_angle_factor(p, angle, angles):
 	elif np.sign(angle) != np.sign(angles[p]):
 		resulting = np.abs(angle) + np.abs(angles[p])
 	else:
-		resulting = angle
+		resulting = np.abs(angle)
 
 	return ((np.sin(resulting / 458.5)) ** 0.34) + 1  # https://www.desmos.com/calculator/ug1xywioa3
 
@@ -225,7 +231,8 @@ def get_adjusted_hitobject(line, p, ms, hitobjects, timestamps, coordinates, ang
 	hitobject_type = int(line_stats[3])
     
 	if hitobject_type == 12:  # Rules out inclusion of spinners in data
-		return 'spinner'
+		return 'spinner', 'spinner', 'spinner', 'spinner', 'spinner'
+
 	elif bin(hitobject_type).endswith('1'):
 		hitobject_type = 'circle'
 	else:
@@ -249,7 +256,7 @@ def get_adjusted_hitobject(line, p, ms, hitobjects, timestamps, coordinates, ang
 		distance = get_distance(coord, coordinates[p])
 		stack = get_stack_obscurity(p, coord, coordinates, ts, timestamps, ms, hitobjects)
 
-		if ts - timestamps[p - 1] < ms:  # Check if the 2nd previous hit object is within the time fram to form a triangle with three points
+		if (ts - timestamps[p - 1] < ms) and (p != 0):  # Check if the 2nd previous hit object is within the time fram to form a triangle with three points
 			angle = get_angle(p, coord, coordinates)
 			distance_diff = get_distance_diff(p, distance, coordinates)
 
@@ -260,6 +267,12 @@ def get_adjusted_hitobject(line, p, ms, hitobjects, timestamps, coordinates, ang
 
 	length_factor = get_length_factor(hitobject_type, line_stats)
 
+	if not ('distance_factor' in locals()):
+		distance_factor = get_distance_factor(distance)
+		distance_diff_factor = get_distance_diff_factor(distance_diff)
+		angle_factor = get_angle_factor(p, angle, angles)
+		stack_factor = get_stack_factor(stack)
+
 	density = distance_factor * distance_diff_factor * angle_factor * length_factor * stack_factor
 
 	if hitobject_type == 'slider':
@@ -268,7 +281,31 @@ def get_adjusted_hitobject(line, p, ms, hitobjects, timestamps, coordinates, ang
 		last = (slider_stats[-1]).split(':')
 		coord = np.array(last, dtype=int)
 
+		# Will later implement system to replace ts with the timestamp in which the slider ends
+
 	return hitobject_type, ts, coord, angle, density
+
+def get_density_per_timestamp(timestamps, densities, ms):
+	circle_amount = np.size(timestamps)
+	density_per_timestamp = np.empty(0, dtype=float)
+	for i in range(0, circle_amount):
+		circles_on_screen = 1
+		for j in range(1, circle_amount):
+			try:
+				timestamps[i + j]
+			except:
+				continue
+			if timestamps[i + j] - timestamps[i] < ms:
+				circles_on_screen = circles_on_screen + 1
+			else:
+				break
+		sum = 0
+		for k in range(i, (i + circles_on_screen)):
+			#if k != (circles_on_screen - 1):
+			sum = sum + densities[k]
+
+		density_per_timestamp = np.append(density_per_timestamp, sum)
+	return density_per_timestamp
 
 def get_adjusted_density(map, path_to_map, ms):
 	p = -2  # For indexing purposes.
@@ -292,16 +329,24 @@ def get_adjusted_density(map, path_to_map, ms):
 			
 			hitobjects = np.append(hitobjects, hitobject_type)
 			timestamps = np.append(timestamps, ts)
-			coordinates = np.append(coordinates, coord)  # add reshape with p
+			if p > 0:
+				coordinates = np.reshape(np.append(coordinates, coord), newshape=(p + 2, 2))  # add reshape with p
+			else:
+				try:
+					coordinates = np.reshape(np.append(coordinates, coord), newshape=(1, 2))
+				except:
+					coordinates = np.reshape(np.append(coordinates, coord), newshape=(2, 2))
+
+
 			angles = np.append(angles, angle)
 			densities = np.append(densities, density)
 
 		else:
 			p -= 1
  
-	density_per_timestamp = get_density_per_timestamp(timestamps, densities, ms, circle_amount)
+	density_per_timestamp = get_density_per_timestamp(timestamps, densities, ms)
 
-	return np.row_stack((timestamps, density_per_timestamp))  # Combines time and density arrays into 2d array.
+	return np.reshape(np.append(timestamps, density_per_timestamp), newshape=(2, np.size(timestamps)))  # Combines time and density arrays into 2d array.
 
 def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
 	map = open(path_to_map, 'r', encoding='utf-8')
@@ -312,14 +357,13 @@ def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
 		ar, ms = get_modded_stats(ar, EZ, HR, DT, HT)
 	else:
 		ms = ar_to_ms(ar)  # Gets the "ms" value, in case there are no mods enabled
-	if adjust == 0:  # Make a new function during app development
+	if adjust == 0:
 		density_data = (get_raw_density(map, path_to_map, ms))
 	
 	else:
 		density_data = (get_adjusted_density(map, path_to_map, ms))
 	return density_data
   
-	# print(density_data)
 np.set_printoptions(threshold=sys.maxsize, suppress=True)
 
 print(start_new_map('cycle hit.osu', 0, 0, 0, 0, 1))
