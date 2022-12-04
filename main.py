@@ -124,7 +124,6 @@ def get_raw_density(map, path_to_map, ms):
 
 	return np.reshape(np.append(timestamps, density_array, axis=0), newshape=(2, circle_amount))  # Combines time and density arrays into 2d array.
 
-# working on adjusted density!
 def get_orientation(p, coord, coordinates):
 	x1, y1, x2, y2, x3, y3 = coord[0], coord[1], coordinates[p, 0], coordinates[p, 1], coordinates[p, 0], coordinates[p, 1]
 
@@ -362,8 +361,6 @@ def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
 	
 	else:
 		density_data = (get_adjusted_density(map, path_to_map, ms))
-	return density_data
+	print(density_data)
   
 np.set_printoptions(threshold=sys.maxsize, suppress=True)
-
-print(start_new_map('cycle hit.osu', 0, 0, 0, 0, 1))
