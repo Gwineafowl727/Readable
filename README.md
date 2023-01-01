@@ -13,7 +13,7 @@ osu! is a free-to-play rhythm game where you hit circles to the beat of a song, 
 
 Practicing to meet the demanded aim, speed, and reaction time of beatmaps is moderately straightforward (improvement in osu! is akin to weightlifting; you start small and work your way up). The game makes it easy to organize maps by general difficulty (star rating) or by speed (beats per minute). Then players can work their way up, much like how instrument beginners start with easy songs before moving to challenging ones.
 
-The ability to process the position and timing of each circle falls under the skillset of “reading.” But as players have pushed the fundamental skillsets to insane levels, the ability to consistently process many objects at once sets good players apart from the top. This is best illustrated by the in-game mod, "EZ," which nerfs the required reaction time in exchange for larger circle size and forcing the player to read high object “density.” EZ mod is shown on the left, while the base/vanilla game is on the left. 
+The ability to process the position and timing of each circle falls under the skillset of “reading.” But as players have pushed the fundamental skillsets to insane levels, the ability to consistently process many objects at once sets good players apart from the top. This is best illustrated by the in-game mod, "EZ," which nerfs the required reaction time in exchange for larger circle size and forcing the player to read high object “density.” EZ mod is shown on the right, while the base/vanilla game is on the left. 
 
 https://user-images.githubusercontent.com/98660733/200202454-81e65ede-03d6-4f6c-978f-c0922be24803.mp4
 
