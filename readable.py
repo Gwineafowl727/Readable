@@ -6,7 +6,9 @@ def get_original_ar(map):
 		if line.startswith('ApproachRate'):
 			return line.replace('ApproachRate:', '')
 
-def ar_to_ms(ar):  # Equations sourced from osu! wiki
+def ar_to_ms(ar):
+	# Sourced from https://osu.ppy.sh/wiki/en/Beatmap/Approach_rate
+
 	if ar == 5:
 		return 1200
 	elif ar < 5:
@@ -14,69 +16,25 @@ def ar_to_ms(ar):  # Equations sourced from osu! wiki
 	else:
 		return 1200 - 750 * (ar - 5) / 5
 
-def ms_to_ar(ms):  # Inverse of the function above, essentially
-	if ms == 1200:
-		return 5
-	elif ms > 1200:
-		ar = np.round(-((ms - 1800) / 120), decimals=2)
-		if (ar).is_integer() == True:
-			return int(ar)
-		else:
-			return ar
-	else:
-		ar = np.round(-((ms - 1200) / 150) + 5, decimals=2)
-		if (ar).is_integer() == True:
-			return int(ar)
-		else:
-			return ar
+def get_modded_ms(original_ar, ar_setting):
+	# Sourced from https://osu.ppy.sh/wiki/en/Beatmap/Approach_rate
 
-def get_modded_stats(original_ar, EZ, HR, DT, HT):
-	if EZ == 1 and HR == 0 and DT == 0 and HT == 0:  # EZ
+	if ar_setting == EZ:
 		modded_ar = original_ar * 0.5
 		modded_ms = ar_to_ms(modded_ar)
-		return modded_ar, modded_ms
+		return modded_ms
 
-	elif EZ == 1 and HR == 0 and DT == 1 and HT == 0:  # EZDT
-		modded_ar = original_ar / 2
-		modded_ms = ar_to_ms(modded_ar) * (2 / 3)
-		return ms_to_ar(modded_ms), modded_ms
-
-	elif EZ == 1 and HR == 0 and DT == 0 and HT == 1: # EZHT
-		modded_ar = original_ar * 0.5
-		modded_ms = ar_to_ms(modded_ar) * (4 / 3)
-		return ms_to_ar(modded_ms), modded_ms
-
-	elif EZ == 0 and HR == 1 and DT == 0 and HT == 0:  # HR
+	elif ar_setting == HR:
 		if original_ar * 1.4 > 10:
 			modded_ar = 10
-			return modded_ar, ar_to_ms(modded_ar)
-		else:
-			modded_ar = original_ar * 1.
-			return modded_ar, ar_to_ms(modded_ar)
-
-	elif EZ == 0 and HR == 1 and DT == 1 and HT == 0:  # HRDT
-		if original_ar * 1.4 > 10:
-			modded_ar = 10
+			return ar_to_ms(modded_ar)
 		else:
 			modded_ar = original_ar * 1.4
-		modded_ms = ar_to_ms(modded_ar) * (2 / 3)
-		return ms_to_ar(modded_ms), modded_ms
+			return ar_to_ms(modded_ar)
+		
+	elif ar_setting == NM:
+		return ar_to_ms(original_ar)
 
-	elif EZ == 0 and HR == 1 and DT == 0 and HT == 1:  # HRHT
-		if original_ar * 1.4 > 10:
-			modded_ar = 10
-		else:
-			modded_ar = original_ar * 1.4
-		modded_ms = ar_to_ms(modded_ar) * (4 / 3)
-		return ms_to_ar(modded_ms), modded_ms
-
-	elif EZ == 0 and HR == 0 and DT == 1 and HT == 0:  # DT
-		modded_ms = ar_to_ms(original_ar) * (2 / 3)
-		return ms_to_ar(modded_ms), modded_ms
-
-	elif EZ == 0 and HR == 0 and DT == 0 and HT == 1:  # HT
-		modded_ms = ar_to_ms(original_ar) * (4 / 3)
-		return ms_to_ar(modded_ms), modded_ms
 	else:
 		sys.exit('Conflict with mod selection')  # Put something else during app development
 
@@ -348,18 +306,13 @@ def get_adjusted_density(map, path_to_map, ms):
 
 	return np.reshape(np.append(timestamps, density_per_timestamp), newshape=(2, np.size(timestamps)))  # Combines time and density arrays into 2d array.
 
-def start_new_map(path_to_map, EZ, HR, DT, HT, adjust):
+def start_new_map(path_to_map, ar_setting):
 	map = open(path_to_map, 'r', encoding='utf-8')
 	ar = float(get_original_ar(map))
 	map.seek(0)  # Resets line variable for next instance of 'for line in map'
 
-	if EZ == 1 or HR == 1 or DT == 1 or HT == 1:
-		ar, ms = get_modded_stats(ar, EZ, HR, DT, HT)
-	else:
-		ms = ar_to_ms(ar)  # Gets the "ms" value, in case there are no mods enabled
-	if adjust == 0:
-		density_data = (get_raw_density(map, path_to_map, ms))
-	
-	else:
-		density_data = (get_adjusted_density(map, path_to_map, ms))
+	ms = get_modded_ms(ar, ar_setting)
+
+	ms = ar_to_ms(ar)
+	density_data = (get_adjusted_density(map, path_to_map, ms))
 	return density_data
