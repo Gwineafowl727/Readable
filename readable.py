@@ -33,6 +33,9 @@ def get_original_ar(map):
 			return line.replace("ApproachRate:", "")
 
 def ar_to_ms(ar):
+	# Sourced from https://osu.ppy.sh/wiki/en/Beatmap/Approach_rate
+
+def ar_to_ms(ar):
 	# Equations sourced from osu! wiki
 	if ar == 5:
 		return 1200
