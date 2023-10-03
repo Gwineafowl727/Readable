@@ -62,7 +62,26 @@ def get_slope(a1, b1, a2, b2):
 				return "no angle"
 			
 
-def get_orientation(slope2, x1, y1, x2, y2, x3, y3):
+def get_orientation(slope1, slope2, x1, y1, x2, y2, x3, y3):
+
+	if slope1 == slope2 and slope1 != float("inf") and slope1 != float("-inf"):
+
+
+
+		if x1 < x2:
+
+			if x2 < x3:
+				return "collinear-straight"
+			else:
+				return "collinear-reverse"
+				
+		else:
+			if x2 > x3:
+				return "collinear-straight"
+			else:
+				return "collinear-reverse"
+
+
 	
 	y_int = y3 - slope2 * x3
 
@@ -87,6 +106,7 @@ def get_orientation(slope2, x1, y1, x2, y2, x3, y3):
 					return "counterclockwise"
 				else:
 					return "clockwise"
+
 			
 		else:
 			if x3 > x1:
@@ -178,7 +198,7 @@ def get_angle_factor(x1, y1, object_range):
 		if slope1 == "no angle" or slope2 == "no angle":
 			return 1, 0
 		
-		orientation = get_orientation(slope2, x1, y1, x2, y2, x3, y3)
+		orientation = get_orientation(slope1, slope2, x1, y1, x2, y2, x3, y3)
 
 	elif type(hitobject_list[-1]) == slider and not hitobject_list[-1].complexity:
 		# Dealing with previous object being a non-complex slider,
@@ -203,19 +223,17 @@ def get_angle_factor(x1, y1, object_range):
 		# Just basic algebra here that's been supercompressed
 		y_int1 = y1 - slope1 * x1
 		y_int2 = y3 - slope2 * x3
+
 		try:
 			x2 = (y_int2 - y_int1) / (slope1 - slope2)
 			y2 = slope1 * x2 + y_int1
 		except:
-			try:
-				x2, y2 = hitobject_list[-1].x_start, hitobject_list[-1].y_start
-			except:
-				return 1, 0
-	
-	else:
-		# Dealing with previous object being a complex slider
-		# Angle is irrelevant here because the player is starting a new chunk mentally
-		return 1, 0
+			x2, y2 = hitobject_list[-1].x_start, hitobject_list[-1].y_start
+		
+		if np.isnan(x2) or np.isnan(y2):
+			x2, y2 = hitobject_list[-1].x_start, hitobject_list[-1].y_start
+
+		orientation = get_orientation(slope1, slope2, x1, y1, x2, y2, x3, y3)
 
 	if orientation == "collinear-straight":
 		angle = 0
@@ -273,6 +291,8 @@ def get_obscurity_factor(timestamp, obscurity_ms, obscurity_type):
 		return np.log10(4 * coverage + 2) + 0.8
 	elif obscurity_type == 3:
 		return np.log10(5 * coverage + 2) + 1
+	elif obscurity_type == 4:
+		return np.log10(5 * coverage + 2) + 0.8
 	else:
 		pass
 
@@ -328,9 +348,6 @@ def get_raw_circle(line_stats):
 			if type(hitobject_list[-1]) == circle:
 				distance_factor, euclidean_distance = get_distance_factor(x1, y1, hitobject_list[-1].x, hitobject_list[-1].y)
 
-			elif not hitobject_list[-1].complexity:
-				distance_factor, euclidean_distance = get_distance_factor(x1, y1, hitobject_list[-1].x_start, hitobject_list[-1].y_start)
-
 			else:
 				distance_factor, euclidean_distance = get_distance_factor(x1, y1, hitobject_list[-1].x_end, hitobject_list[-1].y_end)
 				
@@ -352,13 +369,8 @@ def get_raw_circle(line_stats):
 			
 			if i >= 2:
 
-				if type(hitobject_list[-(i + 1)]) == circle:
-					previous_timestamp = hitobject_list[-(i + 1)].timestamp
-				else:
-					previous_timestamp = hitobject_list[-(i + 1)].timestamp_start
-
-				if (current_stack + 1) == i and in_stack(hitobject_list[-i].timestamp, previous_timestamp):
-					current_stack += 1
+				if current_stack > 0:
+					pass
 
 				else:
 					obscurity_ms = hitobject_list[-i].timestamp
@@ -367,7 +379,7 @@ def get_raw_circle(line_stats):
 			elif i == 1 and in_stack(object_timestamp, hitobject_list[-i].timestamp):
 				current_stack += 1
 
-			else: # Basically when the circles aren't stacked
+			else: # Circles are on same coordinates but not stacked
 				obscurity_ms = hitobject_list[-i].timestamp
 				obscurity_type = 1
 
@@ -425,8 +437,11 @@ def get_end_timestamp(length, timestamp_start, slides):
 
 		index += 1
 
-	velocity_multiplier = -1 / (velocity / 100)
-	completion_time = length / (slider_multiplier * 100 * velocity_multiplier) * beat_length * slides
+	if velocity < 0:
+		velocity_multiplier = -1 / (velocity / 100)
+		completion_time = length / (slider_multiplier * 100 * velocity_multiplier) * beat_length * slides
+	else:
+		completion_time = length / (slider_multiplier * 100) * beat_length * slides
 
 	return timestamp_start + completion_time
 
@@ -449,8 +464,9 @@ def get_raw_slider(line_stats):
 	slides = int(line_stats[6])
 	length = float(line_stats[7])
 
-	curve_cluster = raw_cluster.split("|")
-	curve_cluster.pop(0) # Takes out the first index, which is the letter representing slider type (bezier, catmull, etc)
+	stored_cluster = raw_cluster.split("|")
+	stored_cluster.pop(0) # Takes out the first index, which is the letter representing slider type (bezier, catmull, etc)
+	curve_cluster = stored_cluster
 	slider_x_coords = np.array(x_start)
 	slider_y_coords = np.array(y_start)
 
@@ -486,7 +502,7 @@ def get_raw_slider(line_stats):
 	# For if there are no other hitobjects in view before current hitobject
 	if object_range == 0:
 		raw_density = 0  # A lonely slider on the screen is the easiest to read, hence density 0
-		hitobject = slider(timestamp_start, timestamp_end, x_start, y_start, x_end, y_end, complexity, raw_cluster, euclidean_distance, angle)
+		hitobject = slider(timestamp_start, timestamp_end, x_start, y_start, x_end, y_end, complexity, stored_cluster, euclidean_distance, angle)
 		return hitobject, raw_density
 
 	current_stack = 0
@@ -497,9 +513,6 @@ def get_raw_slider(line_stats):
 		if i == 1:
 			if type(hitobject_list[-1]) == circle:
 				distance_factor, euclidean_distance = get_distance_factor(x_start, y_start, hitobject_list[-1].x, hitobject_list[-1].y)
-
-			elif not hitobject_list[-1].complexity:
-				distance_factor, euclidean_distance = get_distance_factor(x_start, y_start, hitobject_list[-1].x_start, hitobject_list[-1].y_start)
 
 			else:
 				distance_factor, euclidean_distance = get_distance_factor(x_start, y_start, hitobject_list[-1].x_end, hitobject_list[-1].y_end)
@@ -514,29 +527,28 @@ def get_raw_slider(line_stats):
 		if type(hitobject_list[-i]) == circle and (hitobject_list[-i].x, hitobject_list[-i].y) == (x_start, y_start) and not (obscurity_type == -1):
 			
 			if i >= 2:
-				if type(hitobject_list[-(i + 1)]) == circle:
-					previous_timestamp = hitobject_list[-(i + 1)].timestamp
-				else:
-					previous_timestamp = hitobject_list[-(i + 1)].timestamp_start
 
-				if (current_stack + 1) == i and in_stack(hitobject_list[-i].timestamp, previous_timestamp):
-					current_stack += 1
+				if current_stack > 0:
+					pass
 
 				else:
 					obscurity_ms = hitobject_list[-i].timestamp
-					obscurity_type = 2
+					obscurity_type = 1
 
 			elif i == 1 and in_stack(timestamp_start, hitobject_list[-i].timestamp):
 				current_stack += 1
 
-			else: # Basically when the circles aren't stacked
+			else: # Circle is on same coordinates as slider start, but not stacked
 				obscurity_ms = hitobject_list[-i].timestamp
 				obscurity_type = 1
 
 		if type(hitobject_list[-i]) == slider and (hitobject_list[-i].x_start, hitobject_list[-i].y_start) == (x_start, y_start) and not (obscurity_type == -1):
 
-			if raw_cluster == hitobject_list[-i].raw_cluster: # Signifies slider obscured by identical slider
+			# Signifies slider obscured by identical slider
+			if raw_cluster == hitobject_list[-i].stored_cluster:
 				obscurity_type = 3
+			elif raw_cluster == (hitobject_list[-i].stored_cluster)[::-1]:
+				obscurity_type = 4
 			else:
 				obscurity_type = 2
 
@@ -547,7 +559,7 @@ def get_raw_slider(line_stats):
 	except:
 		pass
 
-	hitobject = slider(timestamp_start, timestamp_end, x_start, y_start, x_end, y_end, complexity, raw_cluster, euclidean_distance, angle)
+	hitobject = slider(timestamp_start, timestamp_end, x_start, y_start, x_end, y_end, complexity, stored_cluster, euclidean_distance, angle)
 
 	density = distance_factor * delta_distance_factor * (angle_factor ** (1 / distance_factor)) * obscurity_factor * (length_factor * box_factor ** (length_factor)) ** (np.log10(slides * 0.2) + 1.7)
 
