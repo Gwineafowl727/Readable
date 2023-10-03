@@ -251,16 +251,21 @@ def get_angle_factor(x1, y1, object_range):
 		ba = a - b
 		bc = c - b
 
-		cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+		if (x1, y1) == (x3, y3):
+			angle = 180
+		
+		else:
 
-		# subtract from 180 to convert angle between vectors to the angle in which cursor movement changes
-		angle = np.pi - np.arccos(cosine_angle)
+			cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
 
-		if np.isnan(angle):
-			angle = 0
+			# subtract from 180 to convert angle between vectors to the angle in which cursor movement changes
+			angle = np.pi - np.arccos(cosine_angle)
 
-		if orientation == "clockwise":
-			angle = -angle
+			if np.isnan(angle):
+				angle = 0
+
+			if orientation == "clockwise":
+				angle = -angle
 
 	valid_third_previous = object_range >= 3 and (type(hitobject_list[-3]) == circle or (type(hitobject_list[-3]) == slider and not hitobject_list[-3].complexity))
 

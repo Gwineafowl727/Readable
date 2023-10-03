@@ -5,8 +5,8 @@ import sys
 np.set_printoptions(threshold=sys.maxsize, suppress=True)
 
 def main():
-	map_file = "the big black.osu"
-	mod = "NM"
+	map_file = "nhelv.osu"
+	mod = "EZ"
 	print(readable.start_new_map(map_file, mod))
 
 if __name__ == "__main__":
