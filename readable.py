@@ -31,11 +31,11 @@ def get_distance_factor(x1, y1, x2, y2):
 	# "1" indicates current hitobject, "2" indicates previous.
 	euclidean_distance = (np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2))
 
-	# handles case of hitobjects being stacked back-to-back and prevent divide by zero in log10
+	# handles case of hitobjects being stacked back-to-back and prevent divide by zero in ln
 	if euclidean_distance == 0:
 		return 1, 0
 	
-	distance_factor = ((np.log10(euclidean_distance / 10) / 3) + 0.595)
+	distance_factor = ((np.log(euclidean_distance / 10) / 5) + 0.595)
 
 	return distance_factor, euclidean_distance
 
@@ -44,10 +44,10 @@ def get_delta_distance_factor(d1, d2):
 	# "1" indicates current hitobject, "2" indicates previous.
 	difference = d1 - d2
 	if difference > 0:
-		return ((np.log10(difference + 170) / 10 ) / 3) + 0.595
+		return (np.log10((difference + 170) / 10 ) / 3) + 0.595
 	else:
 		# for if the difference is negative, i.e. a deccelerating stream
-		return ((np.log10(np.abs(difference) + 340) / 10 ) / 4) + 0.595
+		return (np.log10((np.abs(difference) + 340) / 10) / 4) + 0.595
 	
 
 def get_slope(a1, b1, a2, b2):
@@ -398,7 +398,7 @@ def get_raw_circle(line_stats):
 	except:
 		pass
 
-	density = distance_factor * delta_distance_factor * (angle_factor ** (1 / distance_factor)) * obscurity_factor
+	density = distance_factor * delta_distance_factor * (angle_factor ** (1.1 / distance_factor)) * obscurity_factor
 	return hitobject, density
 
 
@@ -666,9 +666,9 @@ def get_frame_densities(map):
 				break
 
 			if raw_densities[i-object_range] > 1:
-				frame += raw_densities[i-object_range] ** (np.sqrt((map_ms - (current_ms - previous_ms)) / map_ms))
+				frame += raw_densities[i-object_range] ** ((((map_ms - (current_ms - previous_ms)) / map_ms)) ** 0.25)
 			else:
-				frame += raw_densities[i-object_range] * (np.sqrt((map_ms - (current_ms - previous_ms)) / map_ms))
+				frame += raw_densities[i-object_range] * ((((map_ms - (current_ms - previous_ms)) / map_ms)) ** 0.25)
 			
 		frame_densities = np.append(frame_densities, frame)
 
@@ -737,7 +737,7 @@ def start_new_map(file_path, new_ar):
 		global stack_leniency, slider_multiplier
 		stack_leniency, mode, ar, slider_multiplier = (get_map_details(map))
 	except:
-		return "error reading .osu file. is this a .osu file?"
+		return "error reading file. is this a .osu file?"
 	
 
 	if mode != 0:
