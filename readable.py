@@ -47,7 +47,7 @@ def get_delta_distance_factor(d1, d2):
 		return (np.log10((difference + 170) / 10 ) / 3) + 0.595
 	else:
 		# for if the difference is negative, i.e. a deccelerating stream
-		return (np.log10((np.abs(difference) + 340) / 10) / 4) + 0.595
+		return (np.log10((np.abs(difference) + 150) / 10) / 3) + 0.595
 	
 
 def get_slope(a1, b1, a2, b2):
@@ -252,7 +252,7 @@ def get_angle_factor(x1, y1, object_range):
 		bc = c - b
 
 		if (x1, y1) == (x3, y3):
-			angle = 180
+			angle = np.pi
 		
 		else:
 
@@ -275,7 +275,7 @@ def get_angle_factor(x1, y1, object_range):
 	else:
 		resulting = np.abs(angle)
 
-	return (np.sin(resulting / 485.5)) ** 0.34 + 1, angle
+	return (np.sin(resulting / 10)) ** 0.34 + 1, angle
 
 
 def in_stack(current_timestamp, previous_timestamp):
@@ -403,7 +403,7 @@ def get_raw_circle(line_stats):
 
 
 def get_length_factor(length):
-	return np.cbrt(length ** 0.2)
+	return (length ** 0.05)
 
 
 def get_box_factor(slider_x_coords, slider_y_coords):
@@ -418,7 +418,7 @@ def get_box_factor(slider_x_coords, slider_y_coords):
 	# Largest possible hypotenuse is 640
 	hypotenuse = np.sqrt((x_highest - x_lowest) ** 2 + (y_highest - y_lowest) ** 2)
 	
-	return np.cbrt(hypotenuse ** 0.2), hypotenuse
+	return (hypotenuse ** 0.05), hypotenuse
 
 
 def get_end_timestamp(length, timestamp_start, slides):
@@ -566,7 +566,7 @@ def get_raw_slider(line_stats):
 
 	hitobject = slider(timestamp_start, timestamp_end, x_start, y_start, x_end, y_end, complexity, stored_cluster, euclidean_distance, angle)
 
-	density = distance_factor * delta_distance_factor * (angle_factor ** (1 / distance_factor)) * obscurity_factor * (length_factor * box_factor ** (length_factor)) ** (np.log10(slides * 0.2) + 1.7)
+	density = distance_factor * delta_distance_factor * (angle_factor ** (1 / distance_factor)) * obscurity_factor * (box_factor ** length_factor) ** (np.log10(slides * 0.2) + 1.7)
 
 	return hitobject, density
 
@@ -666,9 +666,9 @@ def get_frame_densities(map):
 				break
 
 			if raw_densities[i-object_range] > 1:
-				frame += raw_densities[i-object_range] ** ((((map_ms - (current_ms - previous_ms)) / map_ms)) ** 0.25)
+				frame += raw_densities[i-object_range] ** ((((map_ms - (current_ms - previous_ms)) / map_ms)) ** 0.1)
 			else:
-				frame += raw_densities[i-object_range] * ((((map_ms - (current_ms - previous_ms)) / map_ms)) ** 0.25)
+				frame += raw_densities[i-object_range] * ((((map_ms - (current_ms - previous_ms)) / map_ms)) ** 0.1)
 			
 		frame_densities = np.append(frame_densities, frame)
 
@@ -679,7 +679,7 @@ def get_readability_rating(sorted_frame_densities):
 	readability_rating = 0
 
 	for i, frame in enumerate(sorted_frame_densities):
-		readability_rating += frame * (0.95 ** i)
+		readability_rating += frame * 0.003 * ((0.99 ** i) ** (np.sqrt(i) / 15))
 
 	return readability_rating
 
@@ -759,7 +759,7 @@ def start_new_map(file_path, new_ar):
 	elif new_ar != "NM":
 		# For if user wishes to simulate readability with a new AR.
 		# new_ar must be within the AR range zero to 11
-		if (0 <= float(new_ar) <= 11):
+		if (-5 <= float(new_ar) <= 11):
 			ar = new_ar
 		# When making GUI, add blockage that simulates this requirement
 
