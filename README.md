@@ -1,4 +1,8 @@
 # Readable
-This is a tool under development for using an [osu!](https://osu.ppy.sh/home) map's object density as a metric for difficulty. The end goal of this program is to organize maps by readability, with a focus on EZ mod, and make practicing the reading skillset as straightforward as possible.
+A tool for [osu!](https://osu.ppy.sh/home) players to quantify a map's difficulty based on how hard it is to read the object density. [See this page](https://github.com/Gwineafowl727/Readable/wiki/Philosophy-behind-practicing-EZ-mod-and-why-Readable-might-matter) for a more detailed explanation.
 
-Please see this repository's wiki for details on design philosophy and documentation.
+# Download
+
+https://github.com/Gwineafowl727/Readable/releases/tag/release
+
+GUI by [give-me-fries](https://github.com/give-me-fries).
