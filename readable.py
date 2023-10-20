@@ -332,9 +332,8 @@ def get_raw_circle(line_stats):
 
     # For if there are no other hitobjects in view before current hitobject
     if object_range == 0:
-        raw_density = (
-            0  # A lonely circle on the screen is the easiest to read, hence density 0
-        )
+        # A lonely circle on the screen is the easiest to read, hence density 0
+        raw_density = 0 
         return hitobject, raw_density
 
     distance_factor = 1
@@ -488,9 +487,8 @@ def get_raw_slider(line_stats):
     length = float(line_stats[7])
 
     stored_cluster = raw_cluster.split("|")
-    stored_cluster.pop(
-        0
-    )  # Takes out the first index, which is the letter representing slider type (bezier, catmull, etc)
+    # Takes out the first index, which is the letter representing slider type (bezier, catmull, etc)
+    stored_cluster.pop(0)
     curve_cluster = stored_cluster
     slider_x_coords = np.array(x_start)
     slider_y_coords = np.array(y_start)
