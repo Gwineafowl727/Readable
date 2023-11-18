@@ -69,7 +69,6 @@ class Window(QMainWindow):
                 self, caption="Open Map", dir="./", filter="Map Files (*.osu)"
             )[0]
             if file:
-                # Not sure how you want the map's name displayed
                 self.map_name.setText(file.split("/")[-1][:-4])
                 self.filepath = file
             else:
