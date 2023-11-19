@@ -18,9 +18,19 @@ osu_folder_path = "D:/osu folder/osu!"
 collection_db_path = f"{osu_folder_path}/collection.db"
 songs_folder_path = f"{osu_folder_path}/Songs"
 
-ar = "EZ"
+mod = "NM"
+interval = 0.1
+low_end = 1
+high_end = 6
+
+pair_list = []
+low_collection = []
+interval_collections = []
+high_collection = []
 
 os.chdir(songs_folder_path)
+
+c = 1
 
 for mapset_folder in os.listdir():
     if not mapset_folder.endswith(".txt"):
@@ -28,19 +38,51 @@ for mapset_folder in os.listdir():
         
         os.chdir(mapset_folder_path)
 
-        pair_list = []
+        if c > 100:  # Limits amount of maps processed for testing purposes
+            break
 
         for file in os.listdir():
             if file.endswith(".osu"):
+                
                 map_path = f"{mapset_folder_path}/{file}"
                 try:
-                    rating = start_new_map(map_path, ar)
-                    print(f"{file}\n{rating}\n")
+                    rating = start_new_map(map_path, mod)
+                    #print(f"{file}\n{rating}\n")
                     
-                    pair_list.append((rating, file))
+                    if (not np.isnan(rating)) and rating != "not a standard beatmap":
+                        pair_list.append((rating, file))
+                        c += 1
 
                 except:
                     print("error")
-
+                
         os.chdir(songs_folder_path)
-        pair_list.sort
+
+pair_list.sort
+
+for n, pair in enumerate(pair_list):
+    current_index = n
+
+    if pair[0] < low_end:
+        low_collection.append(pair[1])
+    else:
+        break
+
+for i in range(low_end, high_end, interval):
+
+    collection = []
+
+    if i <= pair_list[current_index][0] < (i + interval):
+        collection.append(pair_list[current_index][1])
+        current_index += 1
+
+    else:
+        interval_collections.append(collection)
+        continue
+
+while True:
+    try:
+        high_collection.append(pair_list[current_index][1])
+        current_index += 1
+    except:
+        break
