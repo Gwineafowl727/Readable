@@ -58,7 +58,7 @@ for mapset_folder in os.listdir():
                 
         os.chdir(songs_folder_path)
 
-pair_list.sort
+pair_list = sorted(pair_list)
 
 for n, pair in enumerate(pair_list):
     current_index = n
@@ -68,17 +68,26 @@ for n, pair in enumerate(pair_list):
     else:
         break
 
-for i in range(low_end, high_end, interval):
+for i in np.arange(low_end, high_end, interval):
 
     collection = []
+    try:
+        within_collection = i <= pair_list[current_index][0] < (i + interval)
+    except:
+        within_collection = False
+        pass
 
-    if i <= pair_list[current_index][0] < (i + interval):
+    while within_collection:
         collection.append(pair_list[current_index][1])
         current_index += 1
 
-    else:
-        interval_collections.append(collection)
-        continue
+        try:
+            within_collection = i <= pair_list[current_index][0] < (i + interval)
+        except:
+            within_collection = False
+            break
+    
+    interval_collections.append(collection)
 
 while True:
     try:
