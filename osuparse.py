@@ -1,3 +1,6 @@
+# yoinked from https://github.com/KirkSuD/osu_db_kaitai_struct
+# contains the stuff needed to parse the osu!.db file for the map hashes.
+
 # This is a generated file! Please edit source .ksy file and use kaitai-struct-compiler to rebuild
 
 from pkg_resources import parse_version

@@ -1,3 +1,5 @@
+# yoinked from https://github.com/KirkSuD/osu_db_kaitai_struct
+
 # This is a generated file! Please edit source .ksy file and use kaitai-struct-compiler to rebuild
 
 from pkg_resources import parse_version
