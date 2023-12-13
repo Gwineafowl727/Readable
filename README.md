@@ -6,3 +6,5 @@ A tool for [osu!](https://osu.ppy.sh/home) players to quantify a map's difficult
 https://github.com/Gwineafowl727/Readable/releases/tag/release
 
 GUI by [give-me-fries](https://github.com/give-me-fries).
+
+osu!.db parser borrowed from [KirkSuD](https://github.com/KirkSuD/osu_db_kaitai_struct).
