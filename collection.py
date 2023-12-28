@@ -1,9 +1,9 @@
 import os
 import numpy as np
 from readable import start_new_map
-from osuparse import OsuDb
-from collectionparse import parse_collections, save_collection
-from oce_models import Collections, Collection, CollectionMap
+from parsing.osuparse import OsuDb
+from parsing.collectionparse import parse_collections, save_collection
+from parsing.oce_models import Collections, Collection, CollectionMap
 
 
 osu_folder_path = "D:/osu folder/osu!"
